@@ -6,7 +6,7 @@ package com.example.kanishk.project;
 
 import watch.nudge.gesturelibrary.AppControllerReceiverService;
 
-public class GestureLaunchReceiver extends AppControllerReceiverService {
+class GestureLaunchReceiver extends AppControllerReceiverService {
     @Override
     protected Class getWatchActivityClass() {
         return MainActivity.class;

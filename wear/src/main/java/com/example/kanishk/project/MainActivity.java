@@ -73,6 +73,7 @@ public class MainActivity extends AbstractGestureClientActivity {
         gestures.add(GestureConstants.SubscriptionGesture.FLICK);
         gestures.add(GestureConstants.SubscriptionGesture.SNAP);
         gestures.add(GestureConstants.SubscriptionGesture.TWIST);
+        gestures.add(GestureConstants.SubscriptionGesture.TILT_X);
         return gestures;
     }
 
@@ -98,12 +99,15 @@ public class MainActivity extends AbstractGestureClientActivity {
 
     @Override
     public void onTiltX(float v) {
-
+        //Toast.makeText(this,"Change in the volume",Toast.LENGTH_LONG).show();
     }
 
     @Override
     public void onTilt(float v, float v1, float v2) {
-
+//        //Toast.makeText(this,"X is"+v,Toast.LENGTH_LONG).show();
+//        //Toast.makeText(this,"Y is"+v1,Toast.LENGTH_LONG).show();
+//        //Toast.makeText(this,"Z is"+v2,Toast.LENGTH_LONG).show();
+//        Log.d("Y value ", Float.toString(v1));
     }
 
     @Override
