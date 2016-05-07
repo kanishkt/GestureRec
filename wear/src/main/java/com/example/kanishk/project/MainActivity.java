@@ -1,20 +1,34 @@
 package com.example.kanishk.project;
 
+import android.content.Context;
+import android.hardware.Sensor;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.support.wearable.view.BoxInsetLayout;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.wearable.DataApi;
+import com.google.android.gms.wearable.DataEventBuffer;
+import com.google.android.gms.wearable.Wearable;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Locale;
 
 import watch.nudge.gesturelibrary.AbstractGestureClientActivity;
 import watch.nudge.gesturelibrary.GestureConstants;
 
-public class MainActivity extends AbstractGestureClientActivity {
+import static android.hardware.SensorManager.SENSOR_DELAY_NORMAL;
+
+public class MainActivity extends AbstractGestureClientActivity implements  DataApi.DataListener,
+        GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener{
 
     private static final SimpleDateFormat AMBIENT_DATE_FORMAT =
             new SimpleDateFormat("HH:mm", Locale.US);
@@ -22,6 +36,11 @@ public class MainActivity extends AbstractGestureClientActivity {
     private BoxInsetLayout mContainerView;
     private TextView mTextView;
     private TextView mClockView;
+    private SensorManager mSensorManager;
+    private Sensor mAccelerometer;
+    SensorEventListener accelListener;
+    private int mSensorType;
+    private GoogleApiClient mGoogleApiClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,40 +50,30 @@ public class MainActivity extends AbstractGestureClientActivity {
 
         mContainerView = (BoxInsetLayout) findViewById(R.id.container);
         mTextView = (TextView) findViewById(R.id.text);
-        mClockView = (TextView) findViewById(R.id.clock);
         setSubscribeWindowEvents(true);
+        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        mGoogleApiClient = new GoogleApiClient.Builder(this).addApi(Wearable.API).build();
+        mGoogleApiClient.connect();
+        activate();
     }
 
-    @Override
-    public void onEnterAmbient(Bundle ambientDetails) {
-        super.onEnterAmbient(ambientDetails);
-        updateDisplay();
-    }
+    public void activate(){
+        final Button button = (Button) findViewById(R.id.button1);
+        button.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+                accelListener = new SensorData(mGoogleApiClient);
+                mSensorManager.registerListener(accelListener, mAccelerometer, SENSOR_DELAY_NORMAL);
+                mSensorManager.registerListener(accelListener, mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), SensorManager.SENSOR_DELAY_NORMAL);
+            }
+        });
 
-    @Override
-    public void onUpdateAmbient() {
-        super.onUpdateAmbient();
-        updateDisplay();
-    }
-
-    @Override
-    public void onExitAmbient() {
-        updateDisplay();
-        super.onExitAmbient();
-    }
-
-    private void updateDisplay() {
-        if (isAmbient()) {
-            mContainerView.setBackgroundColor(getResources().getColor(android.R.color.black));
-            mTextView.setTextColor(getResources().getColor(android.R.color.white));
-            mClockView.setVisibility(View.VISIBLE);
-
-            mClockView.setText(AMBIENT_DATE_FORMAT.format(new Date()));
-        } else {
-            mContainerView.setBackground(null);
-            mTextView.setTextColor(getResources().getColor(android.R.color.black));
-            mClockView.setVisibility(View.GONE);
-        }
+        final Button button2 = (Button) findViewById(R.id.button2);
+        button2.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                onPause();
+            }
+        });
     }
 
     @Override
@@ -115,5 +124,34 @@ public class MainActivity extends AbstractGestureClientActivity {
         Toast.makeText(this,"Gesture window closed.",Toast.LENGTH_LONG).show();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        activate();
+    }
 
+    protected void onPause() {
+        super.onPause();
+        mSensorManager.unregisterListener(accelListener);
+    }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onDataChanged(DataEventBuffer dataEventBuffer) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+
+    }
 }

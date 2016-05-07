@@ -8,10 +8,24 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.wearable.DataApi;
+import com.google.android.gms.wearable.DataEvent;
+import com.google.android.gms.wearable.DataEventBuffer;
+import com.google.android.gms.wearable.DataItem;
+import com.google.android.gms.wearable.DataMap;
+import com.google.android.gms.wearable.DataMapItem;
+import com.google.android.gms.wearable.Wearable;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -19,7 +33,9 @@ import java.util.Comparator;
 import watch.nudge.phonegesturelibrary.AbstractPhoneGestureActivity;
 
 public class MainActivity extends AbstractPhoneGestureActivity implements
-        MediaPlayer.OnPreparedListener{
+        MediaPlayer.OnPreparedListener,  DataApi.DataListener,
+        GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener{
 
     AudioManager audioManager;
     float point = 0;
@@ -27,6 +43,11 @@ public class MainActivity extends AbstractPhoneGestureActivity implements
     private ArrayList<Song> songList;
     private int songPosn =0;
     boolean isPaused = false;
+
+    private static final String COUNT_KEY = "com.example.key.count";
+
+    private GoogleApiClient mGoogleApiClient;
+    private int count = 0;
 
 
     @Override
@@ -44,18 +65,11 @@ public class MainActivity extends AbstractPhoneGestureActivity implements
                 return a.getTitle().compareTo(b.getTitle());
             }
         });
-//        if (mp.isPlaying()) {
-//            mp.pause();
-//            //mp.prepareAsync();
-//            //mp.seekTo(0);
-//            Log.d("Here", "here");
-//        } else {
-//            playSong();
-//            mp.start();
-//
-//            Log.d("There", "there");
-//        }
-//        Log.d("After If","b");
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addApi(Wearable.API)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .build();
     }
 
     public void onPrepared(MediaPlayer mp) {
@@ -182,5 +196,67 @@ public class MainActivity extends AbstractPhoneGestureActivity implements
     protected void onPause() {
         super.onPause();
         mp.release();
+        Wearable.DataApi.removeListener(mGoogleApiClient, this);
+        mGoogleApiClient.disconnect();
+    }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+        Wearable.DataApi.addListener(mGoogleApiClient, this);
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onDataChanged(DataEventBuffer dataEvents) {
+        for (DataEvent event : dataEvents) {
+            if (event.getType() == DataEvent.TYPE_CHANGED) {
+                // DataItem changed
+                DataItem item = event.getDataItem();
+                if (item.getUri().getPath().compareTo("/count") == 0) {
+                    DataMap dataMap = DataMapItem.fromDataItem(item).getDataMap();
+                    try {
+                        createCsv(dataMap.getString(COUNT_KEY));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            } else if (event.getType() == DataEvent.TYPE_DELETED) {
+                // DataItem deleted
+            }
+        }
+    }
+
+        public void createCsv(String input) throws IOException {
+            File folder = new File(Environment.getExternalStorageDirectory() + "/project");
+            boolean success = true;
+            if (!folder.exists()) {
+                success = folder.mkdir();
+            }
+            if (success) {
+                // Do something on success
+                String csv = "/storage/emulated/0/project/AccelerometerValue.csv";
+                FileWriter file_writer = new FileWriter(csv, true);
+                String str[] = input.split(",",6);
+                String s =  str[0]+ "," + str[1] + "," + str[2] + "," + str[3] + ","+str[4]+","+str[5]+"\n";
+
+                file_writer.append(s);
+                file_writer.close();
+
+            }
+
+        }
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mGoogleApiClient.connect();
     }
 }
