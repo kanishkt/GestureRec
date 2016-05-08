@@ -6,6 +6,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.support.wearable.view.BoxInsetLayout;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -65,12 +66,13 @@ public class MainActivity extends AbstractGestureClientActivity implements  Data
                 accelListener = new SensorData(mGoogleApiClient);
                 mSensorManager.registerListener(accelListener, mAccelerometer, SENSOR_DELAY_NORMAL);
                 mSensorManager.registerListener(accelListener, mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), SensorManager.SENSOR_DELAY_NORMAL);
+                Log.d("Started","start");
             }
         });
-
         final Button button2 = (Button) findViewById(R.id.button2);
         button2.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                Log.d("Stop","Stop");
                 onPause();
             }
         });

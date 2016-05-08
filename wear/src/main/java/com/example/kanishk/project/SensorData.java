@@ -12,10 +12,7 @@ import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
-//
-//import static android.util.FloatMath.cos;
-//import static android.util.FloatMath.sin;
-//import static android.util.FloatMath.sqrt;
+
 
 /**
  * Created by kanishk on 5/7/16.
@@ -37,18 +34,23 @@ public class SensorData implements SensorEventListener{
     float[] orientation = new float[3];
     private float rotationCurrent[] = new float[]{1f,0f,0f,0f,1f,0f,0f,0f,1f};
     int mAzimuth=0;
+    int count=0;
+    long time;
 
     private static final String COUNT_KEY = "com.example.key.count";
     private GoogleApiClient mGoogleApiClient;
 
     public SensorData(GoogleApiClient mGoogleApiClient){
         this.mGoogleApiClient = mGoogleApiClient;
+        count = 0;
+        time= System.currentTimeMillis();
     }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
         long now = System.currentTimeMillis();
-
+        if(now-time > 10000)
+            return;
         if (event.accuracy == SensorManager.SENSOR_STATUS_UNRELIABLE) {
             return;
         }
@@ -78,7 +80,6 @@ public class SensorData implements SensorEventListener{
                 }
             }
         increaseCounter();
-
     }
         @Override
         public void onAccuracyChanged(Sensor sensor, int accuracy) {
@@ -150,6 +151,5 @@ public class SensorData implements SensorEventListener{
         PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
         PendingResult<DataApi.DataItemResult> pendingResult =
                 Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
-        Log.d("Here","Here");
     }
 }
